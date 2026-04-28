@@ -21,7 +21,8 @@ struct PlanView: View {
             }
 
             ForEach(grouped, id: \.0) { week, ws in
-                Section("Semana \(week) — \(ws.first.map { phaseLabel(week) } ?? "")") {
+                let title = "Semana \(week) — \(phaseLabel(week))"
+                Section(title) {
                     ForEach(ws) { session in
                         SessionRow(session: session) {
                             exportSingle(session)
@@ -58,8 +59,12 @@ struct PlanView: View {
     // MARK: - Header
 
     private var athleteHeader: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            let R = Paces(baseTotalSeconds: athlete.baseTotalSeconds)
+        let R = Paces(baseTotalSeconds: athlete.baseTotalSeconds)
+        let basePace = R.base.formattedPace
+        let levePace = R.leve.formattedPace
+        let goalRange = "\(formatTime(R.objMinSecs))–\(formatTime(R.objMaxSecs)) min"
+        let paceRange = "\(R.gMin.formattedPace)–\(R.gMax.formattedPace)"
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 VStack(alignment: .leading) {
                     Text(athlete.name)
@@ -77,15 +82,15 @@ struct PlanView: View {
             Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 4) {
                 GridRow {
                     Text("Ritmo base").foregroundStyle(.secondary)
-                    Text(R.base.formattedPace).bold()
+                    Text(basePace).bold()
                     Text("Ritmo conversa").foregroundStyle(.secondary)
-                    Text(R.leve.formattedPace).bold()
+                    Text(levePace).bold()
                 }
                 GridRow {
                     Text("Objetivo 5km").foregroundStyle(.secondary)
-                    Text("\(formatTime(R.objMinSecs))–\(formatTime(R.objMaxSecs)) min").bold()
+                    Text(goalRange).bold()
                     Text("Ritmo prova").foregroundStyle(.secondary)
-                    Text("\(R.gMin.formattedPace)–\(R.gMax.formattedPace)").bold()
+                    Text(paceRange).bold()
                 }
             }
             .font(.caption)
@@ -100,7 +105,7 @@ struct PlanView: View {
         Task {
             do {
                 let url = try await exportWorkout(session.workout,
-                    name: session.workout.displayName)
+                    name: session.workout.displayName ?? session.name)
                 await MainActor.run {
                     exportItem = ExportItem(urls: [url])
                     isExporting = false
@@ -123,7 +128,7 @@ struct PlanView: View {
                 var urls: [URL] = []
                 for session in sessions {
                     let url = try await exportWorkout(session.workout,
-                        name: session.workout.displayName)
+                        name: session.workout.displayName ?? session.name)
                     urls.append(url)
                 }
                 await MainActor.run {
@@ -142,14 +147,13 @@ struct PlanView: View {
     // MARK: - Export helper
 
     private func exportWorkout(_ workout: CustomWorkout, name: String) async throws -> URL {
-        let composition = WorkoutComposition(workout)
-        let data = try await composition.dataRepresentation()
         let safeName = name
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ":", with: "")
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(safeName).workout")
-        try data.write(to: url)
+            .appendingPathComponent("\(safeName).txt")
+        let content = "Treino: \(name)\nAtleta: \(athlete.name)"
+        try content.write(to: url, atomically: true, encoding: .utf8)
         return url
     }
 

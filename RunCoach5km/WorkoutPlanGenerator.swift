@@ -597,7 +597,7 @@ struct WorkoutPlanGenerator {
                     IntervalStep(.work,
                         goal: .distance(5000, .meters),
                         alert: .speed(
-                            R.gMin.paceToSpeed...R.gMax.paceToSpeed,
+                            R.gMax.paceToSpeed...R.gMin.paceToSpeed,
                             unit: .metersPerSecond,
                             metric: .current
                         ))
