@@ -151,9 +151,10 @@ struct PlanView: View {
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ":", with: "")
         let url = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(safeName).txt")
-        let content = "Treino: \(name)\nAtleta: \(athlete.name)"
-        try content.write(to: url, atomically: true, encoding: .utf8)
+            .appendingPathComponent("\(safeName).workout")
+        let plan = WorkoutPlan(workout)
+        let data = try JSONEncoder().encode(plan)
+        try data.write(to: url)
         return url
     }
 
