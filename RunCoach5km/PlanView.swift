@@ -153,7 +153,7 @@ struct PlanView: View {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("\(safeName).workout")
         let plan = WorkoutPlan(.custom(workout))
-        let data = try JSONEncoder().encode(plan)
+        let data = plan.dataRepresentation
         try data.write(to: url)
         return url
     }
